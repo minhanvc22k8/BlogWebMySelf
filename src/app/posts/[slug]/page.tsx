@@ -5,8 +5,6 @@ import { vi } from 'date-fns/locale';
 import Link from 'next/link';
 import { Metadata } from 'next';
 
-export const revalidate = 60;
-
 // Định nghĩa kiểu dữ liệu cho props của trang
 type Props = {
   params: { slug: string };
@@ -42,7 +40,7 @@ async function getPost(params: { slug: string }) {
   }
 }
 
-// Đây là dòng đã được sửa lại cho đúng chuẩn
+// Đây là phần đã được sửa lại cho đúng chuẩn
 export default async function PostPage({ params }: Props) {
   const postData = await getPost(params);
   
