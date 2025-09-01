@@ -20,8 +20,8 @@ export default function SignupPage() {
     }
     try {
       await createUserWithEmailAndPassword(auth, email, password);
-      router.push('/admin'); // Chuyển hướng đến trang admin sau khi đăng ký thành công
-    } catch (err: any) {
+      router.push('/admin');
+    } catch (err) { // Sửa ở đây: bỏ kiểu 'any'
       setError('Email đã tồn tại hoặc không hợp lệ.');
       console.error(err);
     }

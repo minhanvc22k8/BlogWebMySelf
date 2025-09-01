@@ -16,8 +16,8 @@ export default function LoginPage() {
     setError('');
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/admin'); // Chuyển hướng đến trang admin sau khi đăng nhập thành công
-    } catch (err: any) {
+      router.push('/admin');
+    } catch (err) { // Sửa ở đây: bỏ kiểu 'any'
       setError('Email hoặc mật khẩu không đúng.');
       console.error(err);
     }
