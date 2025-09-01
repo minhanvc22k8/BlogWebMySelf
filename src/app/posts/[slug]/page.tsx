@@ -3,14 +3,31 @@ import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import Link from 'next/link';
+import { Metadata } from 'next';
 
 export const revalidate = 60;
 
+// Tạo metadata động cho SEO
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+  try {
+    const postData = await getPostData(params.slug);
+    return {
+      title: postData.title,
+    };
+  } catch (error) {
+    return {
+      title: 'Không tìm thấy bài viết',
+    };
+  }
+}
+
+// Hàm này để Next.js biết cần build những trang nào
 export async function generateStaticParams() {
   const paths = await getAllPostSlugs();
   return paths;
 }
 
+// Lấy dữ liệu cho một trang cụ thể
 async function getPost(params: { slug: string }) {
   try {
     const postData = await getPostData(params.slug);
@@ -20,8 +37,11 @@ async function getPost(params: { slug: string }) {
   }
 }
 
+// Đây là dòng đã được sửa
 export default async function PostPage({ params }: { params: { slug: string } }) {
   const postData = await getPost(params);
+  
+  // Chuyển đổi timestamp của Firebase thành đối tượng Date
   const date = postData.createdAt.toDate();
 
   return (
