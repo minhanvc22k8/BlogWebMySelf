@@ -1,73 +1,58 @@
 'use client';
 import './globals.css';
-import { Inter } from 'next/font/google';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 
-const inter = Inter({ subsets: ['latin'] });
-
+// Component Header tách biệt để quản lý trạng thái đăng nhập
 function Header() {
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
   useEffect(() => {
+    // Lắng nghe sự thay đổi trạng thái đăng nhập từ Firebase
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
     });
+    // Dọn dẹp listener khi component không còn được sử dụng
     return () => unsubscribe();
   }, []);
 
   const handleLogout = async () => {
     await signOut(auth);
-    router.push('/');
+    router.push('/'); // Quay về trang chủ sau khi đăng xuất
   };
 
   return (
-    <header className="bg-white/80 backdrop-blur-md sticky top-0 border-b border-gray-200 z-10">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="flex justify-between items-center h-16">
-          <Link href="/" className="group">
-            <h1 className="text-xl font-bold text-gray-900 group-hover:text-indigo-600 transition-colors">
-              My Awesome Blog
-            </h1>
-            <p className="text-sm text-gray-500">
-              Hành trình trở thành Developer
-            </p>
-          </Link>
-          <nav className="flex items-center space-x-4">
-            {user ? (
-              <>
-                <Link href="/admin" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-                  Quản trị
-                </Link>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm font-medium bg-indigo-600 text-white py-1.5 px-3 rounded-md hover:bg-indigo-700"
-                >
-                  Đăng xuất
-                </button>
-              </>
-            ) : (
-              <>
-                <Link href="/login" className="text-sm font-medium text-gray-600 hover:text-indigo-600">
-                  Đăng nhập
-                </Link>
-                <Link href="/signup" className="text-sm font-medium bg-indigo-600 text-white py-1.5 px-3 rounded-md hover:bg-indigo-700">
-                  Đăng ký
-                </Link>
-              </>
-            )}
-          </nav>
+    <header className="container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <Link href="/"><h1>My Awesome Blog</h1></Link>
+          <p style={{ margin: 0, color: '#6b7280' }}>Hành trình trở thành Developer</p>
         </div>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+          {user ? (
+            // Nếu đã đăng nhập
+            <>
+              <Link href="/admin">Quản trị</Link>
+              <button onClick={handleLogout} className="button-small">Đăng xuất</button>
+            </>
+          ) : (
+            // Nếu chưa đăng nhập
+            <>
+              <Link href="/login">Đăng nhập</Link>
+              <Link href="/signup"><button className="button-small">Đăng ký</button></Link>
+            </>
+          )}
+        </nav>
       </div>
     </header>
   );
 }
 
-
+// Layout chính của toàn bộ ứng dụng
 export default function RootLayout({
   children,
 }: {
@@ -75,20 +60,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="vi">
-      <body className={`${inter.className} bg-gray-50 text-gray-800 antialiased`}>
-        <div className="min-h-screen flex flex-col">
+      <body>
           <Header />
-          <main className="flex-grow">
-            <div className="max-w-4xl mx-auto px-6 py-12">
-              {children}
-            </div>
+          <main className="container">
+            {children}
           </main>
-          <footer className="bg-white border-t border-gray-200">
-            <div className="max-w-4xl mx-auto px-6 py-8 text-center text-gray-500">
-              <p>&copy; {new Date().getFullYear()} Tên của bạn. All Rights Reserved.</p>
-            </div>
+          <footer>
+            <p>&copy; {new Date().getFullYear()} Tên của bạn. All Rights Reserved.</p>
           </footer>
-        </div>
       </body>
     </html>
   );

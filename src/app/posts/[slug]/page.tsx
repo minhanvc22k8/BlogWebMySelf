@@ -10,27 +10,25 @@ type Props = {
   params: { slug: string };
 };
 
-// Tạo metadata động cho SEO
+// Tạo metadata động cho SEO (tiêu đề tab)
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const postData = await getPostData(params.slug);
-    return {
-      title: postData.title,
-    };
+    return { title: postData.title };
   } catch {
-    return {
-      title: 'Không tìm thấy bài viết',
-    };
+    return { title: 'Không tìm thấy bài viết' };
   }
 }
 
+export const revalidate = 60;
+
 // Hàm này để Next.js biết cần build những trang nào
 export async function generateStaticParams() {
-  const paths = await getAllPostSlugs();
-  return paths;
+  const posts = await getAllPostSlugs();
+  return posts;
 }
 
-// Lấy dữ liệu cho một trang cụ thể
+// Hàm lấy dữ liệu cho một trang cụ thể
 async function getPost(params: { slug: string }) {
   try {
     const postData = await getPostData(params.slug);
@@ -40,7 +38,7 @@ async function getPost(params: { slug: string }) {
   }
 }
 
-// Đây là phần đã được sửa lại cho đúng chuẩn
+// Component chính của trang
 export default async function PostPage({ params }: Props) {
   const postData = await getPost(params);
   
@@ -49,23 +47,21 @@ export default async function PostPage({ params }: Props) {
 
   return (
     <article>
-      <header className="mb-8">
-        <Link 
-          href="/" 
-          className="text-blue-600 hover:text-blue-800 transition-colors mb-6 inline-block">
+      <header>
+        <Link href="/" style={{ marginBottom: '20px', display: 'inline-block' }}>
           &larr; Quay lại trang chủ
         </Link>
-        <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-gray-900 mb-3">
-          {postData.title}
-        </h1>
-        <time dateTime={date.toISOString()} className="text-gray-500">
+        <h1>{postData.title}</h1>
+        <time dateTime={date.toISOString()} style={{ color: '#6b7280' }}>
           {format(date, 'dd MMMM, yyyy', { locale: vi })}
         </time>
       </header>
       
-      <div
-        className="prose prose-lg max-w-none prose-indigo"
-        dangerouslySetInnerHTML={{ __html: postData.contentHtml }}
+      <hr style={{ borderColor: '#e5e7eb', margin: '30px 0' }} />
+
+      <div 
+        className="article-content" 
+        dangerouslySetInnerHTML={{ __html: postData.contentHtml }} 
       />
     </article>
   );

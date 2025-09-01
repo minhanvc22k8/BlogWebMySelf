@@ -13,30 +13,27 @@ interface Post {
 }
 
 export default function AdminPage() {
-  // === PHẦN MỚI: XÁC THỰC NGƯỜI DÙNG ===
+  // State để quản lý trạng thái đăng nhập
   const [user, setUser] = useState<User | null>(null);
   const [loadingAuth, setLoadingAuth] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Lắng nghe sự thay đổi trạng thái đăng nhập
+    // Lắng nghe sự thay đổi trạng thái đăng nhập từ Firebase
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        // Người dùng đã đăng nhập
-        setUser(currentUser);
-      } else {
-        // Người dùng chưa đăng nhập, chuyển hướng về trang login
+      if (!currentUser) {
+        // Nếu không có người dùng, chuyển hướng về trang đăng nhập
         router.push('/login');
+      } else {
+        setUser(currentUser);
       }
       setLoadingAuth(false);
     });
-
-    // Dọn dẹp listener khi component bị unmount
+    // Dọn dẹp listener khi component không còn được sử dụng
     return () => unsubscribe();
   }, [router]);
 
-
-  // === PHẦN CŨ: QUẢN LÝ BÀI VIẾT (GIỮ NGUYÊN) ===
+  // State để quản lý form và danh sách bài viết
   const [title, setTitle] = useState('');
   const [excerpt, setExcerpt] = useState('');
   const [content, setContent] = useState('');
@@ -44,6 +41,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Hàm lấy danh sách bài viết từ Firestore
   const fetchPosts = async () => {
     const postsCollectionRef = collection(db, 'posts');
     const q = query(postsCollectionRef, orderBy('createdAt', 'desc'));
@@ -55,16 +53,16 @@ export default function AdminPage() {
     setPosts(postsList);
   };
 
-  // Chỉ fetch bài viết sau khi đã xác định người dùng đã đăng nhập
+  // Chỉ lấy bài viết sau khi đã xác định người dùng đăng nhập
   useEffect(() => {
     if (user) {
       fetchPosts();
     }
   }, [user]);
-
+  
+  // Hàm tạo slug (URL thân thiện) từ tiêu đề
   const createSlug = (str: string) => {
-    str = str.replace(/^\s+|\s+$/g, '');
-    str = str.toLowerCase();
+    str = str.replace(/^\s+|\s+$/g, '').toLowerCase();
     const from = "àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ·/_,:;";
     const to   = "aaaaaaaaaaaaaaaaaeeeeeeeeeeeiiiiiooooooooooooooooouuuuuuuuuuuyyyyyd------";
     for (let i = 0, l = from.length; i < l; i++) {
@@ -73,7 +71,8 @@ export default function AdminPage() {
     str = str.replace(/[^a-z0-9 -]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
     return str;
   };
-
+  
+  // Hàm xử lý khi submit form tạo bài viết mới
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !content || !excerpt) {
@@ -95,7 +94,7 @@ export default function AdminPage() {
       setExcerpt('');
       setContent('');
       alert('Đăng bài thành công!');
-      fetchPosts();
+      fetchPosts(); // Tải lại danh sách bài viết
     } catch (err) {
       setError('Có lỗi xảy ra khi đăng bài.');
       console.error(err);
@@ -104,12 +103,13 @@ export default function AdminPage() {
     }
   };
   
+  // Hàm xử lý khi xóa một bài viết
   const handleDelete = async (id: string) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa bài viết này không?')) {
         try {
             await deleteDoc(doc(db, 'posts', id));
             alert('Xóa bài thành công!');
-            fetchPosts();
+            fetchPosts(); // Tải lại danh sách bài viết
         } catch (err) {
             alert('Có lỗi xảy ra khi xóa bài.');
             console.error(err);
@@ -117,85 +117,46 @@ export default function AdminPage() {
     }
   };
 
-  // === PHẦN MỚI: HIỂN THỊ DỰA TRÊN TRẠNG THÁI ĐĂNG NHẬP ===
   if (loadingAuth) {
-    return <p className="text-center mt-20">Đang kiểm tra xác thực...</p>;
+    return <p>Đang kiểm tra xác thực...</p>;
   }
-
-  // Nếu không có user, component sẽ không render gì cả (vì đã bị chuyển hướng)
   if (!user) {
-    return null;
+    return null; // Không hiển thị gì trong khi đang chuyển hướng
   }
 
-  // === PHẦN CŨ: GIAO DIỆN (GIỮ NGUYÊN) ===
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Trang Quản Trị</h1>
-      
-      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
-        <h2 className="text-2xl font-semibold mb-4">Tạo bài viết mới</h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-700">Tiêu đề</label>
-            <input
-              type="text"
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
+    <div>
+      <h1>Trang Quản Trị</h1>
+      <div className="form-container" style={{ margin: '20px 0' }}>
+        <h2>Tạo bài viết mới</h2>
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label htmlFor="title">Tiêu đề</label>
+            <input type="text" id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </div>
-          <div>
-            <label htmlFor="excerpt" className="block text-sm font-medium text-gray-700">Mô tả ngắn (Excerpt)</label>
-            <input
-              type="text"
-              id="excerpt"
-              value={excerpt}
-              onChange={(e) => setExcerpt(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
+          <div className="form-group">
+            <label htmlFor="excerpt">Mô tả ngắn (Excerpt)</label>
+            <input type="text" id="excerpt" value={excerpt} onChange={(e) => setExcerpt(e.target.value)} required />
           </div>
-          <div>
-            <label htmlFor="content" className="block text-sm font-medium text-gray-700">Nội dung (Hỗ trợ Markdown)</label>
-            <textarea
-              id="content"
-              rows={10}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              required
-            />
+          <div className="form-group">
+            <label htmlFor="content">Nội dung (Hỗ trợ Markdown)</label>
+            <textarea id="content" rows={10} value={content} onChange={(e) => setContent(e.target.value)} required />
           </div>
-          {error && <p className="text-red-500">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:bg-gray-400"
-          >
-            {loading ? 'Đang đăng...' : 'Đăng bài'}
-          </button>
+          {error && <p className="error-message">{error}</p>}
+          <button type="submit" disabled={loading}>{loading ? 'Đang đăng...' : 'Đăng bài'}</button>
         </form>
       </div>
-
-      <div className="bg-white p-6 rounded-lg shadow-md">
-        <h2 className="text-2xl font-semibold mb-4">Danh sách bài viết</h2>
-        <ul className="space-y-3">
-            {posts.map(post => (
-                <li key={post.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
-                    <span className="text-gray-800">{post.title}</span>
-                    <button 
-                        onClick={() => handleDelete(post.id)}
-                        className="bg-red-500 text-white text-sm py-1 px-3 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                        Xóa
-                    </button>
-                </li>
-            ))}
+      <div>
+        <h2>Danh sách bài viết</h2>
+        <ul>
+          {posts.map(post => (
+            <li key={post.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{post.title}</span>
+              <button onClick={() => handleDelete(post.id)} className="button-danger button-small">Xóa</button>
+            </li>
+          ))}
         </ul>
       </div>
     </div>
   );
 }
-
