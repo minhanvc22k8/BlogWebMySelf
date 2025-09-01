@@ -3,5 +3,5 @@
   publish = ".next"
 
 [build.environment]
-  # Chỉ định phiên bản Node.js LTS ổn định
-  NODE_VERSION = "20"
+  # Chỉ định phiên bản Node.js LTS cụ thể và ổn định
+  NODE_VERSION = "20.11.1"
