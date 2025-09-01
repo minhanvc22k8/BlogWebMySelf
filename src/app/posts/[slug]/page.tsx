@@ -7,14 +7,19 @@ import { Metadata } from 'next';
 
 export const revalidate = 60;
 
+// Định nghĩa kiểu dữ liệu cho props của trang
+type Props = {
+  params: { slug: string };
+};
+
 // Tạo metadata động cho SEO
-export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const postData = await getPostData(params.slug);
     return {
       title: postData.title,
     };
-  } catch (error) {
+  } catch {
     return {
       title: 'Không tìm thấy bài viết',
     };
@@ -32,13 +37,13 @@ async function getPost(params: { slug: string }) {
   try {
     const postData = await getPostData(params.slug);
     return postData;
-  } catch (error) {
+  } catch {
     notFound();
   }
 }
 
-// Đây là dòng đã được sửa
-export default async function PostPage({ params }: { params: { slug: string } }) {
+// Đây là dòng đã được sửa lại cho đúng chuẩn
+export default async function PostPage({ params }: Props) {
   const postData = await getPost(params);
   
   // Chuyển đổi timestamp của Firebase thành đối tượng Date
